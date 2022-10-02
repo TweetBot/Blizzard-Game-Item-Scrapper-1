@@ -13,11 +13,13 @@ default_media = path + '/blizzard.png'
 
 def battle_shop_scrapper(driver, WebDriverWait, By, EC):
     driver.get('https://us.shop.battle.net/en-gb/family/hearthstone')
+    wait = WebDriverWait(driver, 30)
+
     driver.implicitly_wait(10)
 
     url = None
 
-    main_cards_container = WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "main#main-content-skip-link-anchor div#start-of-content")))
+    main_cards_container = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "main#main-content-skip-link-anchor div#start-of-content")))
     all_cards_link = main_cards_container.find_elements(By.CSS_SELECTOR, "a.ng-star-inserted")
     
  
@@ -79,21 +81,27 @@ def scrape_card_info(driver, By, url, i):
 
      # Check if "Price Element is present"
     try:
-        p = driver.execute_script("return document.querySelector('meka-price-label').shadowRoot.querySelector('div div div span.meka-price-label--details__standard-price')").text
-        price = f"${p.split(' ')[1]}"
+        p = driver.execute_script("return document.querySelector('meka-price-label').shadowRoot.querySelector('div div div span.meka-price-label--details__standard-price')")
+        p_text = p.text
+        price = f"${p_text.split(' ')[1]}"
+    except AttributeError:
+        p = driver.execute_script("return document.querySelector('meka-price-label').shadowRoot.querySelector('div div div div span')")
+        p_text = p.text
+        price = f"${p_text.split(' ')[1]}"
     except JavascriptException:
         price = 'Free'
 
     url = driver.current_url
-    intro = '📢---New shop offer spotted---📢'
+    intro = '📢 Shop offer spotted 📢'
 
-    total_len = f"{intro}\n\n⚠️ {topic_1}\n💵 {price}\n📅 {availability}\n\n\" \"\n\nSource: {url}"
+    total_len = f"{intro}\n\n⚠️ {topic_1}\n💵 {price}\n📅 {availability}\n\n🌐 {url}"
     print(len(total_len))
 
     desc = format_description_text(description, len(total_len))
 
-    text = f"{intro}\n\n⚠️ {topic_1}\n💵 {price}\n📅 {availability}\n\n\"{desc}\"\n\nSource: {url}"
+    text = f"{intro}\n\n⚠️ {topic_1}\n💵 {price}\n📅 {availability}\n📝 {desc}\n\n🌐 {url}"
 
+    print(text)
 
     # UPLOAD TO TWITTER
     tweet(text, bg_img)
